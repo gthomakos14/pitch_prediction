@@ -17,7 +17,7 @@ def refresh_statcast_data(min_year=2023, override_refresh=False):
             print('Override received. Refreshing statcast parquets now...')
         max_year = dt.datetime.now().year
         for i in range(min_year, max_year+1):
-            # Each year is about 770k records
+            # Each year is about 770k records, approximately 100mb in parquet format
             print(f'Fetching full year records for {i}')
             current = statcast(start_dt=f'{i}-03-01',
                             end_dt=f'{i}-11-15',
