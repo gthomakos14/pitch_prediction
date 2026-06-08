@@ -1,4 +1,4 @@
-from src.data.statcast_fetch import refresh_statcast_data
+from src.fetch.statcast_fetch import refresh_statcast_data
 
 
 def main():
