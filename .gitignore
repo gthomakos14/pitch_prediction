@@ -3,3 +3,6 @@
 /.venv/
 **/__pycache__/
 CLAUDE.md
+/mlruns/
+mlflow.db
+/models/artifacts/
