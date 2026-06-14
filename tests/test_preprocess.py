@@ -22,6 +22,7 @@ def processed_df():
             "game_pk": games.tolist(),
             "at_bat_number": rng.integers(1, 5, size=n).tolist(),
             "pitch_number": rng.integers(1, 6, size=n).tolist(),
+            "pitcher": ["123456"] * n,
             "p_throws": rng.choice(["R", "L"], size=n).tolist(),
             "stand": rng.choice(["R", "L"], size=n).tolist(),
             "balls": rng.integers(0, 4, size=n).tolist(),
@@ -56,8 +57,8 @@ def test_preprocessor_transform_without_fit_raises(processed_df):
 def test_preprocessor_boolean_encoding(processed_df):
     pre = Preprocessor()
     X = pre.fit_transform(processed_df)
-    # boolean cols are at indices 3, 4, 5 (after 3 categorical cols)
-    bool_cols = X[:, 3:6]
+    # boolean cols are at indices 4, 5, 6 (after 3 categorical cols + 1 pitcher col)
+    bool_cols = X[:, 4:7]
     assert set(bool_cols.flatten().tolist()).issubset({0.0, 1.0})
 
 

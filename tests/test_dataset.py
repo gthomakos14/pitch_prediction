@@ -19,6 +19,7 @@ def sample_df():
             "game_pk": games.tolist(),
             "at_bat_number": at_bats.tolist(),
             "pitch_number": pitch_nums.tolist(),
+            "pitcher": ["123456"] * n,
             "p_throws": rng.choice(["R", "L"], size=n).tolist(),
             "stand": rng.choice(["R", "L"], size=n).tolist(),
             "balls": rng.integers(0, 4, size=n).tolist(),

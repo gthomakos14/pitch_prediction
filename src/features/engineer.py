@@ -10,6 +10,7 @@ REQUIRED_COLS = [
     "game_pk",
     "at_bat_number",
     "pitch_number",
+    "pitcher",
     "p_throws",
     "stand",
     "balls",
@@ -63,6 +64,7 @@ def build_features(output_path: Path | None = None) -> pl.DataFrame:
         pl.col("on_1b").is_not_null().alias("on_1b"),
         pl.col("on_2b").is_not_null().alias("on_2b"),
         pl.col("on_3b").is_not_null().alias("on_3b"),
+        pl.col("pitcher").cast(pl.Utf8).alias("pitcher"),
     ])
 
     df = df.filter(pl.col("pitch_type").is_not_null())
@@ -73,6 +75,7 @@ def build_features(output_path: Path | None = None) -> pl.DataFrame:
         "game_pk",
         "at_bat_number",
         "pitch_number",
+        "pitcher",
         "p_throws",
         "stand",
         "balls",

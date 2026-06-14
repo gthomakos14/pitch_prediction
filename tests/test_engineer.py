@@ -11,6 +11,7 @@ def raw_df():
             "game_pk": [1, 1, 1, 1, 2, 2],
             "at_bat_number": [1, 1, 1, 2, 1, 1],
             "pitch_number": [1, 2, 3, 1, 1, 2],
+            "pitcher": [600000, 600000, 600000, 600000, 700000, 700000],
             "p_throws": ["R", "R", "R", "R", "L", "L"],
             "stand": ["R", "R", "R", "L", "R", "R"],
             "balls": [0, 1, 1, 0, 0, 1],
@@ -38,6 +39,7 @@ def raw_df():
             "inning_topbot": pl.String,
             "home_score": pl.Int64,
             "away_score": pl.Int64,
+            "pitcher": pl.Int64,
             "on_1b": pl.Int64,
             "on_2b": pl.Int64,
             "on_3b": pl.Int64,
@@ -115,7 +117,7 @@ def test_output_columns(raw_df, tmp_path):
         eng.PROCESSED_DIR = tmp_path
         result = eng.build_features(output_path=tmp_path / "pitches.parquet")
         expected = {
-            "game_pk", "at_bat_number", "pitch_number", "p_throws", "stand",
+            "game_pk", "at_bat_number", "pitch_number", "pitcher", "p_throws", "stand",
             "balls", "strikes", "outs_when_up", "inning", "inning_topbot",
             "home_score", "away_score", "on_1b", "on_2b", "on_3b",
             "prev_pitches", "pitch_type",

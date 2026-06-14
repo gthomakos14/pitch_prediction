@@ -16,6 +16,9 @@ CATEGORICAL_COLS = ["p_throws", "stand", "inning_topbot"]
 BOOLEAN_COLS = ["on_1b", "on_2b", "on_3b"]
 NUMERIC_COLS = ["balls", "strikes", "outs_when_up", "inning", "home_score", "away_score", "pitch_number"]
 TARGET_COL = "pitch_type"
+PITCHER_COL = "pitcher"
+PITCHER_MIN_PITCHES = 50
+UNKNOWN_PITCHER = "UNKNOWN"
 
 TRAIN_FRAC = 0.70
 VAL_FRAC = 0.15
@@ -27,21 +30,35 @@ class Preprocessor:
 
     def __init__(self):
         self.cat_encoders: dict[str, LabelEncoder] = {}
+        self.pitcher_encoder = LabelEncoder()
+        self._frequent_pitchers: set[str] = set()
         self.scaler = StandardScaler()
         self._fitted = False
 
     @property
     def feature_dim(self) -> int:
-        return len(CATEGORICAL_COLS) + len(BOOLEAN_COLS) + len(NUMERIC_COLS)
+        return len(CATEGORICAL_COLS) + 1 + len(BOOLEAN_COLS) + len(NUMERIC_COLS)
 
     def fit(self, df: pl.DataFrame) -> "Preprocessor":
         for col in CATEGORICAL_COLS:
             le = LabelEncoder()
             le.fit(df[col].to_numpy())
             self.cat_encoders[col] = le
+
+        counts = df[PITCHER_COL].value_counts().filter(pl.col("count") >= PITCHER_MIN_PITCHES)
+        self._frequent_pitchers = set(counts[PITCHER_COL].to_list())
+        self.pitcher_encoder.fit([UNKNOWN_PITCHER] + sorted(self._frequent_pitchers))
+
         self.scaler.fit(df.select(NUMERIC_COLS).to_numpy().astype(float))
         self._fitted = True
         return self
+
+    def _encode_pitcher(self, series: pl.Series) -> np.ndarray:
+        labels = [
+            p if p in self._frequent_pitchers else UNKNOWN_PITCHER
+            for p in series.to_list()
+        ]
+        return self.pitcher_encoder.transform(labels).astype(np.float32)
 
     def transform(self, df: pl.DataFrame) -> np.ndarray:
         if not self._fitted:
@@ -49,9 +66,10 @@ class Preprocessor:
         cat = np.column_stack(
             [self.cat_encoders[c].transform(df[c].to_numpy()) for c in CATEGORICAL_COLS]
         ).astype(np.float32)
+        pitcher = self._encode_pitcher(df[PITCHER_COL]).reshape(-1, 1)
         bools = df.select(BOOLEAN_COLS).to_numpy().astype(np.float32)
         nums = self.scaler.transform(df.select(NUMERIC_COLS).to_numpy().astype(float)).astype(np.float32)
-        return np.concatenate([cat, bools, nums], axis=1)
+        return np.concatenate([cat, pitcher, bools, nums], axis=1)
 
     def fit_transform(self, df: pl.DataFrame) -> np.ndarray:
         return self.fit(df).transform(df)
@@ -93,6 +111,12 @@ def run_preprocessing(processed_path: Path | None = None) -> None:
 
     preprocessor = Preprocessor()
     preprocessor.fit(train_df)
+    n_frequent = len(preprocessor._frequent_pitchers)
+    n_total = train_df[PITCHER_COL].n_unique()
+    print(
+        f"Pitcher encoding: {n_frequent}/{n_total} pitchers kept "
+        f"(threshold={PITCHER_MIN_PITCHES} pitches); rest → '{UNKNOWN_PITCHER}'"
+    )
 
     label_encoder = LabelEncoder()
     label_encoder.classes_ = np.array(PITCH_CLASSES)
